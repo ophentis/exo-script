@@ -13,6 +13,7 @@
   "author": "",
   "license": "UNLICENSED",
   "dependencies": {
+    "koa": "^2.0.0-alpha.2",
     "sandcastle": "^1.3.3"
   }
 }
