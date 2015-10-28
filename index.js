@@ -29,6 +29,8 @@ app.use(ctx => {
 		}\
 	")
 
+	ctx.set('Content-Type', 'text/plain')
+
 	ctx.body = new stream.Readable({
 		read: function(n) {
 			console.log(n)
@@ -44,7 +46,9 @@ app.use(ctx => {
 
 			script.run({name: 'Willy'}) // we can pass variables into run.
 		}
-	});
+	})
+
+	// ctx.body.setEncoding('utf8');
 });
 
 app.listen(process.env.PORT || 3000);
