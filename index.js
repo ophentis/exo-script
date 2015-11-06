@@ -14,7 +14,7 @@ var server = express()
 // server.use(morgan('dev'));
 // server.use(express.static('/build'))
 
-app.use(cors())
+server.use(cors())
 
 server.use('/api/:cik/',function(req, res) {
 
