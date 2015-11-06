@@ -13,6 +13,7 @@ var server = express()
 // log all requests to the console
 // server.use(morgan('dev'));
 // server.use(express.static('/build'))
+server.use('/img',express.static('img'))
 
 server.use(cors())
 
