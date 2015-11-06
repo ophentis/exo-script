@@ -1,58 +1,104 @@
-const Koa = require('koa')
-const app = new Koa()
-const SandCastle = require('sandcastle').SandCastle
+'use strict';
 
-var sandcastle = new SandCastle()
+// var config  = require('config');
+var http    = require('http');
+var express = require('express');
+// var gulp    = require('gulp');
+// var gutil   = require('gulp-util');
+// var morgan  = require('morgan');
 
-const stream = require('stream')
+var server = express();
 
-// logger
+// log all requests to the console
+// server.use(morgan('dev'));
+server.use(express.static('/build'));
 
+server.use('/api/:cik/',function(req, res) {
 
+	if( !req.params.cik ) res.status(403).end()
 
-app.use((ctx, next) => {
-	const start = new Date
-	return next().then(() => {
-		const ms = new Date - start
-		console.log(`${ctx.method} ${ctx.url} - ${ms}`)
+	call(req.params.cik, function(e,data) {
+		if( e ) {
+			res.status(403).send(e)
+		} else {
+			console.log(data)
+			var response = {
+				btn: JSON.parse(data[0].result[0][1]),
+				tmp: JSON.parse(data[1].result[0][1]),
+			}
+			res.send(response)
+		}
 	})
+
+	function call(cik, cb) {
+
+		var payload = JSON.stringify({
+			auth: {cik: cik},
+			calls: [{
+				id: 1,
+				procedure: 'read',
+				arguments: [{alias:'btn'},{}]
+			},{
+				id: 2,
+				procedure: 'read',
+				arguments: [{alias:'tmp'},{}]
+			}]
+		})
+
+		var httpOpt = {
+			hostname: 'm2.exosite.com',
+			port: 80,
+			path: '/onep:v1/rpc/process',
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'Content-Length': payload.length
+			}
+		}
+
+		// process.nextTick(function() {
+			var req = http.request(httpOpt,function(res) {
+				res.setEncoding('utf8')
+				var response = []
+				res.on('data',function(chunk) {
+					response.push(chunk);
+				})
+				res.on('end',function() {
+					if( res.statusCode != 200 ) {
+						if( res.statusCode == 502 ) {
+							console.log('bad gateway')
+						}
+						return cb(res.statusMessage+' ('+res.statusCode+')\n'+req.rawHeaders,res)
+					}
+					try {
+						response = response.join('')
+						response = JSON.parse(response)
+					} catch(e) {
+						return cb(e,res)
+					}
+					cb(null,response)
+				})
+			})
+			req.on('error',function(e) {
+				// console.log(e)
+				onep.emit('error',e)
+				cb(e)
+			})
+			req.write(payload)
+			req.end()
+	}
+
 })
 
-// response
-
-app.use(ctx => {
-	console.log('oh')
-
-	var script = sandcastle.createScript("\
-		exports.main = function() {\
-			exit('Hey ' + name + ' Hello World!');\
-		}\
-	")
-
-	ctx.set('Content-Type', 'text/plain')
-
-	// ctx.body = new stream.Readable({
-	// 	read: function(n) {
-	// 		console.log(n)
-	// 		var self = this
-	// 		// sets this._read under the hood
-	// 		script.on('exit', (err, output) => {
-	// 			console.log(output)
-	// 			console.log(self.push(output))
-	// 			console.log(self.push(null))
-	// 			// ctx.body = output
-	// 			// res.end(output); // Hello World!
-	// 		});
-
-	// 		script.run({name: 'Willy'}) // we can pass variables into run.
-	// 	}
-	// })
-
-	// ctx.body.setEncoding('utf8');
-
-	ctx.body = yield response()
+// Start webserver if not already running
+var s = http.createServer(server);
+s.on('error', function(err){
+	if(err.code === 'EADDRINUSE'){
+		gutil.log('Development server is already started at port ' + config.serverPort);
+	}
+	else {
+		throw err;
+	}
 });
 
-app.listen(process.env.PORT || 3000);
-
-console.log('Server running at http://exo-script.herokuapp.com');
+s.listen(process.env.PORT || 3000);
