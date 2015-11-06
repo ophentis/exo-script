@@ -1,17 +1,20 @@
 'use strict';
 
 // var config  = require('config');
-var http    = require('http');
-var express = require('express');
+var http    = require('http')
+var express = require('express')
+var cors = require('cors')
 // var gulp    = require('gulp');
 // var gutil   = require('gulp-util');
 // var morgan  = require('morgan');
 
-var server = express();
+var server = express()
 
 // log all requests to the console
 // server.use(morgan('dev'));
-server.use(express.static('/build'));
+// server.use(express.static('/build'))
+
+app.use(cors())
 
 server.use('/api/:cik/',function(req, res) {
 
