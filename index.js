@@ -31,24 +31,26 @@ app.use(ctx => {
 
 	ctx.set('Content-Type', 'text/plain')
 
-	ctx.body = new stream.Readable({
-		read: function(n) {
-			console.log(n)
-			var self = this
-			// sets this._read under the hood
-			script.on('exit', (err, output) => {
-				console.log(output)
-				console.log(self.push(output))
-				console.log(self.push(null))
-				// ctx.body = output
-				// res.end(output); // Hello World!
-			});
+	// ctx.body = new stream.Readable({
+	// 	read: function(n) {
+	// 		console.log(n)
+	// 		var self = this
+	// 		// sets this._read under the hood
+	// 		script.on('exit', (err, output) => {
+	// 			console.log(output)
+	// 			console.log(self.push(output))
+	// 			console.log(self.push(null))
+	// 			// ctx.body = output
+	// 			// res.end(output); // Hello World!
+	// 		});
 
-			script.run({name: 'Willy'}) // we can pass variables into run.
-		}
-	})
+	// 		script.run({name: 'Willy'}) // we can pass variables into run.
+	// 	}
+	// })
 
 	// ctx.body.setEncoding('utf8');
+
+	ctx.body = yield response()
 });
 
 app.listen(process.env.PORT || 3000);
